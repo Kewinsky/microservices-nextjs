@@ -22,9 +22,10 @@ class Logger {
 
   requestLogger(req, res, next) {
     const start = Date.now();
+    const loggerInstance = this; // Zachowaj referencję do instancji
     res.on('finish', () => {
       const duration = Date.now() - start;
-      this.info(`${req.method} ${req.path} - ${res.statusCode} - ${duration}ms`);
+      loggerInstance.info(`${req.method} ${req.path} - ${res.statusCode} - ${duration}ms`);
     });
     next();
   }

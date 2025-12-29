@@ -71,17 +71,27 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(error.error || `HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ 
+          error: `HTTP error! status: ${response.status}` 
+        }));
+        throw new Error(error.error || error.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      // Jeśli to błąd sieci (CORS, connection refused, etc.)
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(`Nie można połączyć się z API Gateway. Sprawdź czy serwis działa na ${this.baseUrl}`);
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   // Auth endpoints

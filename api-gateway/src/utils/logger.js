@@ -15,20 +15,25 @@ class Logger {
   }
 
   debug(message, ...args) {
-    if (process.env.NODE_ENV === 'development') {
-      console.debug(`[DEBUG] [${new Date().toISOString()}] ${message}`, ...args);
+    if (process.env.NODE_ENV === "development") {
+      console.debug(
+        `[DEBUG] [${new Date().toISOString()}] ${message}`,
+        ...args
+      );
     }
   }
 
   requestLogger(req, res, next) {
     const start = Date.now();
-    res.on('finish', () => {
+    const loggerInstance = this; // Zachowaj referencję do instancji
+    res.on("finish", () => {
       const duration = Date.now() - start;
-      this.info(`${req.method} ${req.path} - ${res.statusCode} - ${duration}ms`);
+      loggerInstance.info(
+        `${req.method} ${req.path} - ${res.statusCode} - ${duration}ms`
+      );
     });
     next();
   }
 }
 
 export const logger = new Logger();
-

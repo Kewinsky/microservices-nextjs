@@ -26,18 +26,28 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
+  },
+  global: {
+    headers: {
+      'x-client-info': 'auth-service'
+    }
   }
 });
 
 // Anon client do logowania (jeśli anon key dostępny)
 const supabaseAnon = supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
   : null;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(logger.requestLogger);
+app.use(logger.requestLogger.bind(logger));
 
 // Walidacja danych
 const registerValidation = [
@@ -67,8 +77,13 @@ app.post('/api/auth/register', registerValidation, async (req, res, next) => {
 
     const { email, password, name } = req.body;
 
-    // Utwórz użytkownika przez Supabase Admin API
-    const { data: userData, error: authError } = await supabase.auth.admin.createUser({
+    logger.info(`Próba rejestracji użytkownika: ${email}`);
+
+    // Utwórz użytkownika przez Supabase Admin API z timeoutem
+    logger.debug('Wywołanie supabase.auth.admin.createUser...');
+    
+    // Timeout 15 sekund dla żądania do Supabase
+    const createUserPromise = supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true, // Automatyczne potwierdzenie email
@@ -76,6 +91,30 @@ app.post('/api/auth/register', registerValidation, async (req, res, next) => {
         name: name || email.split('@')[0]
       }
     });
+    
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout: Supabase nie odpowiedział w ciągu 15 sekund')), 15000)
+    );
+    
+    let userData, authError;
+    try {
+      const result = await Promise.race([createUserPromise, timeoutPromise]);
+      // Sprawdź czy result ma właściwą strukturę (może być timeout error)
+      if (result && typeof result === 'object' && ('data' in result || 'error' in result)) {
+        userData = result.data;
+        authError = result.error;
+        logger.debug('Odpowiedź z createUser otrzymana');
+      } else {
+        // Jeśli result nie ma struktury {data, error}, to prawdopodobnie timeout
+        throw new Error('Timeout: Nieprawidłowa odpowiedź z Supabase');
+      }
+    } catch (timeoutError) {
+      logger.error('Timeout podczas tworzenia użytkownika:', timeoutError.message);
+      return res.status(504).json({ 
+        error: 'Timeout: Serwis autoryzacji nie odpowiedział w odpowiednim czasie',
+        details: timeoutError.message
+      });
+    }
 
     if (authError) {
       // Sprawdź czy błąd wynika z istniejącego użytkownika
@@ -89,17 +128,33 @@ app.post('/api/auth/register', registerValidation, async (req, res, next) => {
     // Zwróć token JWT przez logowanie (używając anon client jeśli dostępny)
     let tokenData = null;
     if (supabaseAnon) {
-      const { data, error: tokenError } = await supabaseAnon.auth.signInWithPassword({
-        email,
-        password
-      });
+      logger.debug('Próba logowania po rejestracji...');
+      try {
+        // Timeout 10 sekund dla logowania
+        const signInPromise = supabaseAnon.auth.signInWithPassword({
+          email,
+          password
+        });
+        
+        const signInTimeout = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout podczas logowania')), 10000)
+        );
+        
+        const { data, error: tokenError } = await Promise.race([signInPromise, signInTimeout]);
 
-      if (tokenError || !data.session) {
-        logger.warn('Nie można wygenerować tokenu po rejestracji:', tokenError?.message);
-        // Kontynuuj bez tokenu - użytkownik będzie musiał się zalogować
-      } else {
-        tokenData = data;
+        if (tokenError || !data?.session) {
+          logger.warn('Nie można wygenerować tokenu po rejestracji:', tokenError?.message);
+          // Kontynuuj bez tokenu - użytkownik będzie musiał się zalogować
+        } else {
+          tokenData = data;
+          logger.debug('Token wygenerowany pomyślnie');
+        }
+      } catch (tokenErr) {
+        logger.warn('Błąd podczas generowania tokenu:', tokenErr.message);
+        // Kontynuuj bez tokenu - nie jest to krytyczne
       }
+    } else {
+      logger.debug('Brak anon key - pomijanie generowania tokenu');
     }
 
     logger.info(`Użytkownik zarejestrowany: ${email}`);

@@ -26,7 +26,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(logger.requestLogger);
+app.use(logger.requestLogger.bind(logger));
 
 // Walidacja
 const createItemValidation = [

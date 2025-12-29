@@ -40,9 +40,12 @@ export function SignUpForm({
     }
 
     try {
-      await apiClient.register(email, password, name || undefined);
+      console.log('Attempting to register user...', { email, hasPassword: !!password });
+      const response = await apiClient.register(email, password, name || undefined);
+      console.log('Registration successful:', response);
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
+      console.error('Registration error:', error);
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);

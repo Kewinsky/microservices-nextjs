@@ -17,8 +17,9 @@ const LOGGING_SERVICE = process.env.LOGGING_SERVICE_URL || 'http://localhost:300
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(logger.requestLogger);
+// NIE parsuj JSON globalnie - proxy potrzebuje surowego body
+// app.use(express.json()); // WYŁĄCZONE - powoduje problemy z proxy
+app.use(logger.requestLogger.bind(logger));
 
 /**
  * Funkcja pomocnicza do ekstrakcji userId z tokenu JWT
@@ -45,37 +46,41 @@ const extractUserIdFromToken = (token) => {
 /**
  * Middleware do logowania żądań do logging-service
  */
-const logRequest = async (req, res, next) => {
-  // Przechwytuj odpowiedź
-  const originalSend = res.send;
-  res.send = function(data) {
-    res.send = originalSend;
-    return originalSend.call(this, data);
-  };
+const logRequest = (req, res, next) => {
+  // Loguj asynchronicznie po zakończeniu - nie blokuj żądania
+  res.on('finish', () => {
+    // Uruchom asynchronicznie bez await - nie blokuj
+    setImmediate(async () => {
+      try {
+        const userId = req.headers.authorization 
+          ? extractUserIdFromToken(req.headers.authorization.split(' ')[1])
+          : null;
 
-  // Loguj po zakończeniu żądania
-  res.on('finish', async () => {
-    try {
-      const userId = req.headers.authorization 
-        ? extractUserIdFromToken(req.headers.authorization.split(' ')[1])
-        : null;
-
-      await axios.post(`${LOGGING_SERVICE}/api/logs`, {
-        user_id: userId,
-        action: `${req.method} ${req.path}`,
-        service: 'api-gateway',
-        details: JSON.stringify({ 
-          query: req.query, 
-          statusCode: res.statusCode 
-        }),
-        ip_address: req.ip || req.connection.remoteAddress || 'unknown'
-      }).catch(err => {
-        logger.warn('Błąd podczas logowania do logging-service:', err.message);
-      });
-    } catch (error) {
-      // Nie przerywaj żądania jeśli logowanie się nie powiodło
-      logger.warn('Błąd w middleware logowania:', error.message);
-    }
+        // Timeout dla logowania - nie blokuj jeśli logging-service nie odpowiada
+        await Promise.race([
+          axios.post(`${LOGGING_SERVICE}/api/logs`, {
+            user_id: userId,
+            action: `${req.method} ${req.path}`,
+            service: 'api-gateway',
+            details: JSON.stringify({ 
+              query: req.query, 
+              statusCode: res.statusCode 
+            }),
+            ip_address: req.ip || req.connection.remoteAddress || 'unknown'
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Logging timeout')), 2000)
+          )
+        ]).catch(err => {
+          // Cicho zignoruj błędy logowania - nie są krytyczne
+          if (process.env.NODE_ENV === 'development') {
+            logger.debug('Błąd podczas logowania do logging-service:', err.message);
+          }
+        });
+      } catch (error) {
+        // Ignoruj błędy - logowanie nie powinno blokować żądań
+      }
+    });
   });
 
   next();
@@ -84,52 +89,49 @@ const logRequest = async (req, res, next) => {
 /**
  * Proxy configuration dla Auth Service
  */
-app.use('/api/auth', logRequest, createProxyMiddleware({
+app.use('/api/auth', createProxyMiddleware({
   target: AUTH_SERVICE,
   changeOrigin: true,
+  timeout: 30000,
+  proxyTimeout: 30000,
   pathRewrite: {
     '^/api/auth': '/api/auth'
   },
   onProxyReq: (proxyReq, req) => {
-    // Przekaż nagłówki
-    if (req.headers.authorization) {
-      proxyReq.setHeader('Authorization', req.headers.authorization);
-    }
+    logger.info(`[PROXY] ${req.method} ${req.path} -> ${AUTH_SERVICE}${req.path}`);
+    // Przekaż wszystkie nagłówki (oprócz host)
+    Object.keys(req.headers).forEach(key => {
+      if (key !== 'host' && key !== 'connection') {
+        proxyReq.setHeader(key, req.headers[key]);
+      }
+    });
   },
-  onProxyRes: async (proxyRes, req, res) => {
-    // Loguj sukces logowania/rejestracji
-    if ((req.path === '/api/auth/login' || req.path === '/api/auth/register') && 
-        (proxyRes.statusCode === 200 || proxyRes.statusCode === 201)) {
-      let body = '';
-      proxyRes.on('data', chunk => { body += chunk; });
-      proxyRes.on('end', async () => {
-        try {
-          const data = JSON.parse(body);
-          if (data.user) {
-            await axios.post(`${LOGGING_SERVICE}/api/logs`, {
-              user_id: data.user.id,
-              action: req.path === '/api/auth/login' ? 'LOGIN' : 'REGISTER',
-              service: 'auth-service',
-              details: `User ${data.user.email}`,
-              ip_address: req.ip || req.connection.remoteAddress || 'unknown'
-            }).catch(err => logger.warn('Błąd logowania akcji:', err.message));
-          }
-        } catch (error) {
-          logger.debug('Błąd parsowania odpowiedzi:', error.message);
-        }
-      });
-    }
+  onProxyRes: (proxyRes, req, res) => {
+    // Tylko loguj - nie modyfikuj odpowiedzi
+    logger.debug(`Odpowiedź z Auth Service: ${proxyRes.statusCode} dla ${req.path}`);
   },
   onError: (err, req, res) => {
-    logger.error('Błąd proxy do Auth Service:', err.message);
-    res.status(503).json({ error: 'Auth Service niedostępny' });
+    logger.error('Błąd proxy do Auth Service:', {
+      message: err.message,
+      code: err.code,
+      path: req.path,
+      method: req.method
+    });
+    if (!res.headersSent) {
+      // ECONNRESET oznacza, że połączenie zostało zerwane
+      if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT') {
+        res.status(504).json({ error: 'Timeout: Auth Service nie odpowiedział w odpowiednim czasie' });
+      } else {
+        res.status(503).json({ error: 'Auth Service niedostępny', details: err.message });
+      }
+    }
   }
 }));
 
 /**
  * Proxy configuration dla CRUD Service
  */
-app.use('/api/items', logRequest, createProxyMiddleware({
+app.use('/api/items', createProxyMiddleware({
   target: CRUD_SERVICE,
   changeOrigin: true,
   pathRewrite: {
@@ -164,7 +166,7 @@ app.use('/api/items', logRequest, createProxyMiddleware({
 /**
  * Proxy configuration dla Logging Service
  */
-app.use('/api/logs', logRequest, createProxyMiddleware({
+app.use('/api/logs', createProxyMiddleware({
   target: LOGGING_SERVICE,
   changeOrigin: true,
   pathRewrite: {
