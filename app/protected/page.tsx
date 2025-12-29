@@ -11,7 +11,7 @@ async function UserDetails() {
   // Spróbuj najpierw przez getClaims (dla Supabase session)
   let user = null;
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
-  
+
   if (!claimsError && claimsData?.claims) {
     user = claimsData.claims;
   } else {

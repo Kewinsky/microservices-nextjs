@@ -2,16 +2,17 @@
 
 Kompleksowy system mikroserwisów składający się z trzech niezależnych serwisów komunikujących się poprzez API Gateway oraz aplikacji klienta Next.js.
 
+> 📖 **Pełna dokumentacja projektu dostępna w pliku [DOKUMENTACJA.md](./DOKUMENTACJA.md)**
+
 ## 📋 Spis treści
 
+- [Szybki Start](#szybki-start)
 - [Architektura](#architektura)
 - [Wymagania](#wymagania)
 - [Instalacja](#instalacja)
-- [Konfiguracja](#konfiguracja)
 - [Uruchomienie](#uruchomienie)
-- [Struktura projektu](#struktura-projektu)
 - [API Endpoints](#api-endpoints)
-- [Bazy danych](#bazy-danych)
+- [Dokumentacja](#dokumentacja)
 
 ## 🏗️ Architektura
 
@@ -41,21 +42,25 @@ System składa się z następujących komponentów:
 ### Komponenty
 
 1. **Auth Service** (Port 3001)
+
    - Rejestracja i logowanie użytkowników
    - Generowanie i weryfikacja JWT przez Supabase
    - Wykorzystuje Supabase Auth API
 
 2. **CRUD Service** (Port 3002)
+
    - Pełne operacje CRUD na danych (items)
    - Własna tabela w Supabase
    - Autoryzacja przez JWT
 
 3. **Logging Service** (Port 3003)
+
    - Rejestrowanie działań użytkowników i systemu
    - Odczyt logów z filtrowaniem
    - Własna tabela w Supabase
 
 4. **API Gateway** (Port 3000)
+
    - Centralny punkt komunikacji
    - Routing do mikroserwisów
    - Automatyczne logowanie żądań
@@ -199,42 +204,64 @@ CRUD_SERVICE_URL=http://localhost:3002
 LOGGING_SERVICE_URL=http://localhost:3003
 ```
 
-## 🎯 Uruchomienie
+## 🚀 Szybki Start
 
-### Opcja 1: Uruchomienie lokalne (bez Docker)
+### Uruchomienie z Docker Compose (Zalecane)
 
 ```bash
-# Terminal 1 - Auth Service
-cd services/auth-service
+# 1. Skonfiguruj zmienne środowiskowe
+cp .env.example .env
+# Edytuj .env i dodaj swoje klucze Supabase
+
+# 2. Uruchom mikroserwisy i API Gateway
+docker-compose up -d
+
+# 3. W osobnym terminalu uruchom aplikację Next.js
+npm install
 npm run dev
 
-# Terminal 2 - CRUD Service
-cd services/crud-service
-npm run dev
+# 4. Otwórz aplikację
+# http://localhost:3004
+```
 
-# Terminal 3 - Logging Service
-cd services/logging-service
-npm run dev
+### Weryfikacja
 
-# Terminal 4 - API Gateway
-cd api-gateway
-npm run dev
+```bash
+# Sprawdź status wszystkich serwisów
+curl http://localhost:3000/health/all
 
-# Terminal 5 - Next.js Client
+# Sprawdź status kontenerów
+docker-compose ps
+```
+
+## 🎯 Uruchomienie
+
+### Opcja 1: Docker Compose (Zalecane)
+
+```bash
+# Uruchom wszystkie mikroserwisy
+docker-compose up -d
+
+# Uruchom aplikację Next.js
 npm run dev
 ```
 
-### Opcja 2: Uruchomienie z Docker Compose
+### Opcja 2: Uruchomienie lokalne
 
 ```bash
-# Utwórz plik .env w głównym katalogu
-cp .env.example .env
-# Edytuj .env i dodaj zmienne Supabase
+# Terminal 1 - Auth Service
+cd services/auth-service && npm run dev
 
-# Uruchom wszystkie serwisy
-docker-compose up --build
+# Terminal 2 - CRUD Service
+cd services/crud-service && npm run dev
 
-# W osobnym terminalu uruchom klienta Next.js
+# Terminal 3 - Logging Service
+cd services/logging-service && npm run dev
+
+# Terminal 4 - API Gateway
+cd api-gateway && npm run dev
+
+# Terminal 5 - Next.js Client
 npm run dev
 ```
 
@@ -267,11 +294,13 @@ microservices-nextjs/
 ### API Gateway (http://localhost:3000)
 
 #### Auth Endpoints
+
 - `POST /api/auth/register` - Rejestracja użytkownika
 - `POST /api/auth/login` - Logowanie
 - `POST /api/auth/verify` - Weryfikacja tokenu
 
 #### CRUD Endpoints (wymagają autoryzacji)
+
 - `GET /api/items` - Lista items
 - `GET /api/items/:id` - Pojedynczy item
 - `POST /api/items` - Utworzenie item
@@ -279,10 +308,12 @@ microservices-nextjs/
 - `DELETE /api/items/:id` - Usunięcie item
 
 #### Logs Endpoints (wymagają autoryzacji)
+
 - `GET /api/logs` - Lista logów
 - `GET /api/logs/user/:userId` - Logi użytkownika
 
 #### Health Checks
+
 - `GET /health` - Status API Gateway
 - `GET /health/all` - Status wszystkich serwisów
 
@@ -294,20 +325,6 @@ Wszystkie dane przechowywane są w Supabase:
 - **public.items** - Dane CRUD (z RLS)
 - **public.logs** - Logi systemowe (z RLS)
 
-## 🧪 Testowanie
-
-1. **Rejestracja/Logowanie**
-   - Przejdź do `/auth/sign-up` lub `/auth/login`
-   - Utwórz konto i zaloguj się
-
-2. **Operacje CRUD**
-   - Przejdź do `/items`
-   - Utwórz, edytuj, usuń items
-
-3. **Podgląd logów**
-   - Przejdź do `/logs`
-   - Zobacz wszystkie zarejestrowane działania
-
 ## 📝 Funkcjonalności
 
 ✅ Rejestracja i logowanie użytkowników  
@@ -315,19 +332,40 @@ Wszystkie dane przechowywane są w Supabase:
 ✅ Pełne operacje CRUD na danych  
 ✅ Rejestrowanie działań użytkowników/systemu  
 ✅ Odczyt logów z filtrowaniem  
-✅ API Gateway z routingiem  
-✅ Aplikacja klienta z interfejsem użytkownika  
+✅ API Gateway z routingiem i autoryzacją  
+✅ Nowoczesny interfejs użytkownika (Next.js)  
 ✅ Row Level Security w Supabase  
 ✅ Docker Compose dla łatwego uruchomienia  
+✅ Tryb jasny i ciemny  
+✅ Responsywny design
 
 ## 🛠️ Technologie
 
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui
-- **Backend**: Node.js, Express
+- **Backend**: Node.js, Express.js
 - **Database**: Supabase (PostgreSQL)
-- **Auth**: Supabase Auth
+- **Auth**: Supabase Auth (JWT)
 - **API Gateway**: http-proxy-middleware
 - **Containerization**: Docker, Docker Compose
+
+## 📚 Dokumentacja
+
+- **[DOKUMENTACJA.md](./DOKUMENTACJA.md)** - Pełna dokumentacja projektu z opisem funkcjonalności, interfejsu użytkownika, API endpoints i instrukcjami
+
+## 🧪 Testowanie
+
+Uruchom skrypt testowy:
+
+```bash
+./test-all-functionalities.sh
+```
+
+Lub przetestuj manualnie:
+
+1. Rejestracja: `/auth/sign-up`
+2. Logowanie: `/auth/login`
+3. CRUD: `/items`
+4. Logi: `/logs`
 
 ## 📄 Licencja
 
