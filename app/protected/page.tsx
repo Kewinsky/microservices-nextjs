@@ -7,13 +7,35 @@ import { Suspense } from "react";
 
 async function UserDetails() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  
+  // Spróbuj najpierw przez getClaims (dla Supabase session)
+  let user = null;
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  
+  if (!claimsError && claimsData?.claims) {
+    user = claimsData.claims;
+  } else {
+    // Jeśli nie ma Supabase session, sprawdź token z cookie
+    const cookies = await import('next/headers').then(m => m.cookies());
+    const authToken = cookies.get('auth_token')?.value;
+    
+    if (authToken) {
+      const { data: userData, error: userError } = await supabase.auth.getUser(authToken);
+      if (!userError && userData?.user) {
+        user = {
+          sub: userData.user.id,
+          email: userData.user.email,
+          ...userData.user.user_metadata
+        };
+      }
+    }
+  }
 
-  if (error || !data?.claims) {
+  if (!user) {
     redirect("/auth/login");
   }
 
-  return JSON.stringify(data.claims, null, 2);
+  return JSON.stringify(user, null, 2);
 }
 
 export default function ProtectedPage() {

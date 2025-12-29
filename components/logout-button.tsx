@@ -9,9 +9,11 @@ export function LogoutButton() {
 
   const logout = () => {
     apiClient.logout();
+    // Usuń cookie
+    document.cookie = 'auth_token=; path=/; max-age=0';
     router.push("/auth/login");
     router.refresh();
   };
 
-  return <Button onClick={logout}>Logout</Button>;
+  return <Button onClick={logout} size="sm" variant="outline">Logout</Button>;
 }

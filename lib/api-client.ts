@@ -96,10 +96,22 @@ class ApiClient {
 
   // Auth endpoints
   async register(email: string, password: string, name?: string): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/api/auth/register', {
+    const response = await this.request<AuthResponse>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, name }),
     });
+    
+    // Jeśli token został zwrócony, zapisz go
+    if (response.token) {
+      this.setToken(response.token);
+      
+      // Ustaw token w cookie dla middleware
+      if (typeof document !== 'undefined') {
+        document.cookie = `auth_token=${response.token}; path=/; max-age=86400; SameSite=Lax`;
+      }
+    }
+    
+    return response;
   }
 
   async login(email: string, password: string): Promise<AuthResponse> {
@@ -108,6 +120,12 @@ class ApiClient {
       body: JSON.stringify({ email, password }),
     });
     this.setToken(response.token);
+    
+    // Ustaw token w cookie dla middleware
+    if (typeof document !== 'undefined') {
+      document.cookie = `auth_token=${response.token}; path=/; max-age=86400; SameSite=Lax`;
+    }
+    
     return response;
   }
 
@@ -119,6 +137,10 @@ class ApiClient {
 
   logout() {
     this.setToken(null);
+    // Usuń cookie
+    if (typeof document !== 'undefined') {
+      document.cookie = 'auth_token=; path=/; max-age=0';
+    }
   }
 
   // CRUD endpoints

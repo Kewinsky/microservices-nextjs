@@ -12,6 +12,15 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { AlertTriangle } from "lucide-react";
 
 export function ItemsManager() {
   const [items, setItems] = useState<Item[]>([]);
@@ -19,7 +28,11 @@ export function ItemsManager() {
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ title: "", description: "" });
+  const [createFormData, setCreateFormData] = useState({ title: "", description: "" });
+  const [editFormData, setEditFormData] = useState({ title: "", description: "" });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadItems();
@@ -40,14 +53,14 @@ export function ItemsManager() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) return;
+    if (!createFormData.title.trim()) return;
 
     try {
       setIsCreating(true);
       setError(null);
-      const response = await apiClient.createItem(formData.title, formData.description || undefined);
+      const response = await apiClient.createItem(createFormData.title, createFormData.description || undefined);
       setItems([response.item, ...items]);
-      setFormData({ title: "", description: "" });
+      setCreateFormData({ title: "", description: "" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create item");
     } finally {
@@ -56,39 +69,53 @@ export function ItemsManager() {
   };
 
   const handleUpdate = async (id: string) => {
-    if (!formData.title.trim()) return;
+    if (!editFormData.title.trim()) return;
 
     try {
       setError(null);
-      const response = await apiClient.updateItem(id, formData.title, formData.description || undefined);
+      const response = await apiClient.updateItem(id, editFormData.title, editFormData.description || undefined);
       setItems(items.map(item => item.id === id ? response.item : item));
       setEditingId(null);
-      setFormData({ title: "", description: "" });
+      setEditFormData({ title: "", description: "" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update item");
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
+  const openDeleteDialog = (item: Item) => {
+    setItemToDelete({ id: item.id, title: item.title });
+    setDeleteDialogOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setItemToDelete(null);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
 
     try {
+      setIsDeleting(true);
       setError(null);
-      await apiClient.deleteItem(id);
-      setItems(items.filter(item => item.id !== id));
+      await apiClient.deleteItem(itemToDelete.id);
+      setItems(items.filter(item => item.id !== itemToDelete.id));
+      closeDeleteDialog();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete item");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const startEdit = (item: Item) => {
     setEditingId(item.id);
-    setFormData({ title: item.title, description: item.description || "" });
+    setEditFormData({ title: item.title, description: item.description || "" });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setFormData({ title: "", description: "" });
+    setEditFormData({ title: "", description: "" });
   };
 
   if (loading) {
@@ -108,25 +135,25 @@ export function ItemsManager() {
               <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                value={createFormData.title}
+                onChange={(e) => setCreateFormData({ ...createFormData, title: e.target.value })}
                 placeholder="Enter title"
                 required
-                disabled={isCreating}
+                disabled={isCreating || editingId !== null}
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                value={createFormData.description}
+                onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
                 placeholder="Enter description (optional)"
-                disabled={isCreating}
+                disabled={isCreating || editingId !== null}
               />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" disabled={isCreating}>
+            <Button type="submit" disabled={isCreating || editingId !== null}>
               {isCreating ? "Creating..." : "Create Item"}
             </Button>
           </form>
@@ -152,8 +179,8 @@ export function ItemsManager() {
                           <Label htmlFor={`edit-title-${item.id}`}>Title</Label>
                           <Input
                             id={`edit-title-${item.id}`}
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            value={editFormData.title}
+                            onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
                             required
                           />
                         </div>
@@ -161,8 +188,8 @@ export function ItemsManager() {
                           <Label htmlFor={`edit-desc-${item.id}`}>Description</Label>
                           <Input
                             id={`edit-desc-${item.id}`}
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            value={editFormData.description}
+                            onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
                           />
                         </div>
                         <div className="flex gap-2">
@@ -187,7 +214,7 @@ export function ItemsManager() {
                           <Button onClick={() => startEdit(item)} variant="outline" size="sm">
                             Edit
                           </Button>
-                          <Button onClick={() => handleDelete(item.id)} variant="destructive" size="sm">
+                          <Button onClick={() => openDeleteDialog(item)} variant="destructive" size="sm">
                             Delete
                           </Button>
                         </div>
@@ -200,6 +227,39 @@ export function ItemsManager() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Confirm Deletion
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete item <strong>"{itemToDelete?.title}"</strong>?
+              <br />
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={closeDeleteDialog}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
