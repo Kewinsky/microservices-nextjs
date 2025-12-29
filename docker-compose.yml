@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+  # Auth Service
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - NODE_ENV=development
+    volumes:
+      - ./services/auth-service:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  # CRUD Service
+  crud-service:
+    build:
+      context: ./services/crud-service
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - NODE_ENV=development
+    volumes:
+      - ./services/crud-service:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  # Logging Service
+  logging-service:
+    build:
+      context: ./services/logging-service
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - NODE_ENV=development
+    volumes:
+      - ./services/logging-service:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - CRUD_SERVICE_URL=http://crud-service:3002
+      - LOGGING_SERVICE_URL=http://logging-service:3003
+      - NODE_ENV=development
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+    depends_on:
+      - auth-service
+      - crud-service
+      - logging-service
+    restart: unless-stopped

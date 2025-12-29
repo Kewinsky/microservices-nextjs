@@ -22,8 +22,7 @@ export default function ProtectedPage() {
       <div className="w-full">
         <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
           <InfoIcon size="16" strokeWidth={2} />
-          This is a protected page that you can only see as an authenticated
-          user
+          This is a protected page that you can only see as an authenticated user
         </div>
       </div>
       <div className="flex flex-col gap-2 items-start">
@@ -34,9 +33,25 @@ export default function ProtectedPage() {
           </Suspense>
         </pre>
       </div>
-      <div>
-        <h2 className="font-bold text-2xl mb-4">Next steps</h2>
-        <FetchDataSteps />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="border rounded-lg p-6">
+          <h3 className="font-bold text-xl mb-2">Items Management</h3>
+          <p className="text-muted-foreground mb-4">
+            Manage your items with full CRUD operations
+          </p>
+          <a href="/items" className="text-primary hover:underline">
+            Go to Items →
+          </a>
+        </div>
+        <div className="border rounded-lg p-6">
+          <h3 className="font-bold text-xl mb-2">System Logs</h3>
+          <p className="text-muted-foreground mb-4">
+            View activity logs from all microservices
+          </p>
+          <a href="/logs" className="text-primary hover:underline">
+            View Logs →
+          </a>
+        </div>
       </div>
     </div>
   );
