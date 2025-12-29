@@ -559,14 +559,14 @@ System wykorzystuje Supabase (PostgreSQL) jako bazę danych. Wszystkie tabele s�
 
 Przechowuje rekordy utworzone przez użytkowników.
 
-**Pola:**
-
-- `id` (UUID) - Unikalny identyfikator rekordu (klucz główny)
-- `title` (VARCHAR 200) - Tytuł itemu (wymagane)
-- `description` (TEXT) - Opis itemu (opcjonalne)
-- `user_id` (UUID) - Identyfikator użytkownika (relacja z auth.users)
-- `created_at` (TIMESTAMPTZ) - Data i czas utworzenia
-- `updated_at` (TIMESTAMPTZ) - Data i czas ostatniej aktualizacji
+| Pole | Typ | Opis |
+|------|-----|------|
+| `id` | UUID | Unikalny identyfikator rekordu (klucz główny) |
+| `title` | VARCHAR(200) | Tytuł itemu (wymagane) |
+| `description` | TEXT | Opis itemu (opcjonalne) |
+| `user_id` | UUID | Identyfikator użytkownika (relacja z auth.users) |
+| `created_at` | TIMESTAMPTZ | Data i czas utworzenia |
+| `updated_at` | TIMESTAMPTZ | Data i czas ostatniej aktualizacji |
 
 **Row Level Security:**
 
@@ -577,15 +577,15 @@ Przechowuje rekordy utworzone przez użytkowników.
 
 Przechowuje logi wszystkich operacji systemowych.
 
-**Pola:**
-
-- `id` (UUID) - Unikalny identyfikator logu (klucz główny)
-- `user_id` (UUID) - Identyfikator użytkownika (opcjonalne, NULL dla akcji systemowych)
-- `action` (VARCHAR 100) - Typ akcji (np. CREATE_ITEM, LOGIN, REGISTER)
-- `service` (VARCHAR 50) - Nazwa serwisu, który wykonał akcję (auth-service, crud-service, api-gateway)
-- `details` (TEXT) - Szczegółowe informacje o akcji (opcjonalne)
-- `ip_address` (VARCHAR 45) - Adres IP żądania (opcjonalne)
-- `created_at` (TIMESTAMPTZ) - Data i czas wykonania akcji
+| Pole | Typ | Opis |
+|------|-----|------|
+| `id` | UUID | Unikalny identyfikator logu (klucz główny) |
+| `user_id` | UUID | Identyfikator użytkownika (opcjonalne, NULL dla akcji systemowych) |
+| `action` | VARCHAR(100) | Typ akcji (np. CREATE_ITEM, LOGIN, REGISTER) |
+| `service` | VARCHAR(50) | Nazwa serwisu, który wykonał akcję (auth-service, crud-service, api-gateway) |
+| `details` | TEXT | Szczegółowe informacje o akcji (opcjonalne) |
+| `ip_address` | VARCHAR(45) | Adres IP żądania (opcjonalne) |
+| `created_at` | TIMESTAMPTZ | Data i czas wykonania akcji |
 
 **Row Level Security:**
 
