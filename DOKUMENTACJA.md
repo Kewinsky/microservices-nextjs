@@ -7,10 +7,10 @@
 3. [Technologie](#technologie)
 4. [Struktura Projektu](#struktura-projektu)
 5. [Funkcjonalności](#funkcjonalności)
-8. [Opis Interfejsu Użytkownika](#opis-interfejsu-użytkownika)
-9. [API Endpoints](#api-endpoints)
-10. [Baza Danych](#baza-danych)
-11. [Logi i Monitorowanie](#logi-i-monitorowanie)
+6. [Opis Interfejsu Użytkownika](#opis-interfejsu-użytkownika)
+7. [API Endpoints](#api-endpoints)
+8. [Baza Danych](#baza-danych)
+9. [Logi i Monitorowanie](#logi-i-monitorowanie)
 
 ---
 
@@ -279,7 +279,6 @@ Strona główna aplikacji prezentuje:
 
 <img width="3360" height="4224" alt="screencapture-localhost-3004-2025-12-29-10_07_50" src="https://github.com/user-attachments/assets/d80fd914-d01f-4fac-941e-60adfa8ddb0d" />
 <img width="3360" height="4224" alt="screencapture-localhost-3004-2025-12-29-10_08_23" src="https://github.com/user-attachments/assets/3d03262c-fdac-4fab-8f91-b88cc25c0859" />
-
 
 ### Strona Rejestracji
 
@@ -559,14 +558,14 @@ System wykorzystuje Supabase (PostgreSQL) jako bazę danych. Wszystkie tabele s�
 
 Przechowuje rekordy utworzone przez użytkowników.
 
-| Pole | Typ | Opis |
-|------|-----|------|
-| `id` | UUID | Unikalny identyfikator rekordu (klucz główny) |
-| `title` | VARCHAR(200) | Tytuł itemu (wymagane) |
-| `description` | TEXT | Opis itemu (opcjonalne) |
-| `user_id` | UUID | Identyfikator użytkownika (relacja z auth.users) |
-| `created_at` | TIMESTAMPTZ | Data i czas utworzenia |
-| `updated_at` | TIMESTAMPTZ | Data i czas ostatniej aktualizacji |
+| Pole          | Typ          | Opis                                             |
+| ------------- | ------------ | ------------------------------------------------ |
+| `id`          | UUID         | Unikalny identyfikator rekordu (klucz główny)    |
+| `title`       | VARCHAR(200) | Tytuł itemu (wymagane)                           |
+| `description` | TEXT         | Opis itemu (opcjonalne)                          |
+| `user_id`     | UUID         | Identyfikator użytkownika (relacja z auth.users) |
+| `created_at`  | TIMESTAMPTZ  | Data i czas utworzenia                           |
+| `updated_at`  | TIMESTAMPTZ  | Data i czas ostatniej aktualizacji               |
 
 **Row Level Security:**
 
@@ -577,15 +576,15 @@ Przechowuje rekordy utworzone przez użytkowników.
 
 Przechowuje logi wszystkich operacji systemowych.
 
-| Pole | Typ | Opis |
-|------|-----|------|
-| `id` | UUID | Unikalny identyfikator logu (klucz główny) |
-| `user_id` | UUID | Identyfikator użytkownika (opcjonalne, NULL dla akcji systemowych) |
-| `action` | VARCHAR(100) | Typ akcji (np. CREATE_ITEM, LOGIN, REGISTER) |
-| `service` | VARCHAR(50) | Nazwa serwisu, który wykonał akcję (auth-service, crud-service, api-gateway) |
-| `details` | TEXT | Szczegółowe informacje o akcji (opcjonalne) |
-| `ip_address` | VARCHAR(45) | Adres IP żądania (opcjonalne) |
-| `created_at` | TIMESTAMPTZ | Data i czas wykonania akcji |
+| Pole         | Typ          | Opis                                                                         |
+| ------------ | ------------ | ---------------------------------------------------------------------------- |
+| `id`         | UUID         | Unikalny identyfikator logu (klucz główny)                                   |
+| `user_id`    | UUID         | Identyfikator użytkownika (opcjonalne, NULL dla akcji systemowych)           |
+| `action`     | VARCHAR(100) | Typ akcji (np. CREATE_ITEM, LOGIN, REGISTER)                                 |
+| `service`    | VARCHAR(50)  | Nazwa serwisu, który wykonał akcję (auth-service, crud-service, api-gateway) |
+| `details`    | TEXT         | Szczegółowe informacje o akcji (opcjonalne)                                  |
+| `ip_address` | VARCHAR(45)  | Adres IP żądania (opcjonalne)                                                |
+| `created_at` | TIMESTAMPTZ  | Data i czas wykonania akcji                                                  |
 
 **Row Level Security:**
 
@@ -620,7 +619,6 @@ Wszystkie serwisy logują swoje działania do konsoli Docker. Logi zawierają:
 <img width="1095" height="665" alt="Screenshot 2025-12-29 at 09 26 04" src="https://github.com/user-attachments/assets/b22cc16a-918f-4bfc-87a2-ef1fe9e6c8fd" />
 <img width="1095" height="394" alt="Screenshot 2025-12-29 at 09 25 19" src="https://github.com/user-attachments/assets/689f98df-9898-43e5-868f-120503e7e17f" />
 <img width="1082" height="221" alt="Screenshot 2025-12-29 at 09 42 48" src="https://github.com/user-attachments/assets/2a5ffa71-3d35-447c-a300-1be2f27651c0" />
-
 
 ### Logi w Bazie Danych
 
