@@ -7,20 +7,16 @@
 3. [Technologie](#technologie)
 4. [Struktura Projektu](#struktura-projektu)
 5. [Funkcjonalności](#funkcjonalności)
-6. [Instalacja i Uruchomienie](#instalacja-i-uruchomienie)
-7. [Konfiguracja](#konfiguracja)
 8. [Opis Interfejsu Użytkownika](#opis-interfejsu-użytkownika)
 9. [API Endpoints](#api-endpoints)
 10. [Baza Danych](#baza-danych)
-11. [Testowanie](#testowanie)
+11. [Logi i Monitorowanie](#logi-i-monitorowanie)
 
 ---
 
 ## Wprowadzenie
 
 Projekt przedstawia kompleksowy system mikroserwisów zbudowany w architekturze rozproszonej, komunikujący się poprzez centralny API Gateway. System składa się z trzech niezależnych mikroserwisów (Autoryzacja, CRUD, Logowanie) oraz aplikacji klienckiej zbudowanej w Next.js.
-
-**Repozytorium projektu:** [Link do repozytorium GitHub]
 
 ### Główne Cele Projektu
 
@@ -281,8 +277,9 @@ Strona główna aplikacji prezentuje:
 - Sekcję architektury systemu
 - Footer z informacjami o projekcie
 
-[widok_landing_page_light]
-[widok_landing_page_dark]
+<img width="3360" height="4224" alt="screencapture-localhost-3004-2025-12-29-10_07_50" src="https://github.com/user-attachments/assets/d80fd914-d01f-4fac-941e-60adfa8ddb0d" />
+<img width="3360" height="4224" alt="screencapture-localhost-3004-2025-12-29-10_08_23" src="https://github.com/user-attachments/assets/3d03262c-fdac-4fab-8f91-b88cc25c0859" />
+
 
 ### Strona Rejestracji
 
@@ -295,7 +292,7 @@ Formularz rejestracji zawiera:
 - Walidację danych w czasie rzeczywistym
 - Link do strony logowania
 
-[widok_strony_rejestracji]
+<img width="1680" height="924" alt="Screenshot 2025-12-29 at 09 33 20" src="https://github.com/user-attachments/assets/de8b8622-884c-4424-ac13-72704c5ea599" />
 
 ### Strona Logowania
 
@@ -307,7 +304,7 @@ Formularz logowania zawiera:
 - Link do strony rejestracji
 - Automatyczne przekierowanie po zalogowaniu
 
-[widok_strony_logowania]
+<img width="1680" height="924" alt="Screenshot 2025-12-29 at 09 33 06" src="https://github.com/user-attachments/assets/5cdf166c-0a83-4eec-bf13-af9759f91ab8" />
 
 ### Strona Resetowania Hasła
 
@@ -316,7 +313,7 @@ Formularz resetowania hasła:
 - Pole na email
 - Wysyłka linku resetującego
 
-[widok_strony_forgot_password]
+<img width="1680" height="924" alt="Screenshot 2025-12-29 at 09 33 13" src="https://github.com/user-attachments/assets/49f3dc6b-d31b-4bea-8656-9b1569836b24" />
 
 ### Strona Główna (Protected)
 
@@ -326,7 +323,7 @@ Po zalogowaniu użytkownik widzi:
 - Linki do głównych sekcji aplikacji
 - Nawigację do Items i Logs
 
-[widok_strony_home_protected]
+<img width="1680" height="924" alt="Screenshot 2025-12-29 at 09 54 02" src="https://github.com/user-attachments/assets/369aa206-a484-44e2-85ac-8e236d1262e7" />
 
 ### Zarządzanie Items
 
@@ -334,7 +331,7 @@ Po zalogowaniu użytkownik widzi:
 
 Po pierwszym zalogowaniu lista items jest pusta z zachętą do utworzenia pierwszego rekordu.
 
-[widok_strony_items_management_pusta]
+<img width="1680" height="924" alt="Screenshot 2025-12-29 at 09 31 04" src="https://github.com/user-attachments/assets/64c2b4ef-6d79-40f3-a54b-d46a405829a4" />
 
 #### Formularz Tworzenia
 
@@ -352,7 +349,7 @@ Po utworzeniu rekordów widoczna jest lista z:
 - Datą utworzenia
 - Przyciskami "Edit" i "Delete"
 
-[widok_strony_items_management_z_rekordem]
+<img width="1680" height="924" alt="Screenshot 2025-12-29 at 09 54 39" src="https://github.com/user-attachments/assets/5c43a7cb-6da3-4988-920d-6809d5149a02" />
 
 #### Edycja Rekordu
 
@@ -363,7 +360,7 @@ Po kliknięciu "Edit":
 - Przyciski "Save" i "Cancel"
 - Formularz tworzenia jest wyłączony podczas edycji
 
-[widok_strony_items_management_edycja]
+<img width="1680" height="924" alt="Screenshot 2025-12-29 at 09 58 21" src="https://github.com/user-attachments/assets/1240f467-7ce8-46e4-8b3f-a5d4f944de45" />
 
 #### Po Aktualizacji
 
@@ -373,7 +370,7 @@ Po zapisaniu zmian:
 - Komunikat potwierdzenia
 - Formularz edycji zniknął
 
-[widok_strony_items_management_po_edycji]
+<img width="1680" height="924" alt="Screenshot 2025-12-29 at 09 58 48" src="https://github.com/user-attachments/assets/0f007109-9ab2-4de1-ad8e-81a2e13f1f16" />
 
 #### Modal Usuwania
 
@@ -384,7 +381,7 @@ Po kliknięciu "Delete":
 - Ostrzeżenie o nieodwracalności operacji
 - Przyciski "Cancel" i "Delete"
 
-[widok_strony_items_management_modal_usuwania]
+<img width="1680" height="924" alt="Screenshot 2025-12-29 at 10 01 50" src="https://github.com/user-attachments/assets/adcbce03-50cd-4daa-9d99-54c8a86410d0" />
 
 ### System Logs
 
@@ -393,11 +390,10 @@ Widok logów systemowych prezentuje:
 - Listę wszystkich zarejestrowanych akcji
 - Informacje o użytkowniku, akcji, serwisie
 - Datę i czas wykonania
-- Adres IP
 - Szczegóły operacji
 - Możliwość filtrowania i paginacji
 
-[widok_strony_system_logs]
+<img width="1680" height="924" alt="Screenshot 2025-12-29 at 10 02 26" src="https://github.com/user-attachments/assets/4c0d1c50-82f8-4cb4-b293-c7bf117024f8" />
 
 ---
 
@@ -563,117 +559,40 @@ System wykorzystuje Supabase (PostgreSQL) jako bazę danych. Wszystkie tabele s�
 
 Przechowuje rekordy utworzone przez użytkowników.
 
-```sql
-CREATE TABLE items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title VARCHAR(200) NOT NULL,
-  description TEXT,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ
-);
+**Pola:**
 
--- RLS Policies
-ALTER TABLE items ENABLE ROW LEVEL SECURITY;
+- `id` (UUID) - Unikalny identyfikator rekordu (klucz główny)
+- `title` (VARCHAR 200) - Tytuł itemu (wymagane)
+- `description` (TEXT) - Opis itemu (opcjonalne)
+- `user_id` (UUID) - Identyfikator użytkownika (relacja z auth.users)
+- `created_at` (TIMESTAMPTZ) - Data i czas utworzenia
+- `updated_at` (TIMESTAMPTZ) - Data i czas ostatniej aktualizacji
 
-CREATE POLICY "Users can view their own items"
-  ON items FOR SELECT
-  USING (auth.uid() = user_id);
+**Row Level Security:**
 
-CREATE POLICY "Users can create their own items"
-  ON items FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own items"
-  ON items FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own items"
-  ON items FOR DELETE
-  USING (auth.uid() = user_id);
-```
+- Użytkownicy mogą przeglądać tylko swoje własne rekordy
+- Użytkownicy mogą tworzyć, aktualizować i usuwać tylko swoje własne rekordy
 
 #### Tabela: logs
 
 Przechowuje logi wszystkich operacji systemowych.
 
-```sql
-CREATE TABLE logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  action VARCHAR(100) NOT NULL,
-  service VARCHAR(50) NOT NULL,
-  details TEXT,
-  ip_address VARCHAR(45),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+**Pola:**
 
--- RLS Policies
-ALTER TABLE logs ENABLE ROW LEVEL SECURITY;
+- `id` (UUID) - Unikalny identyfikator logu (klucz główny)
+- `user_id` (UUID) - Identyfikator użytkownika (opcjonalne, NULL dla akcji systemowych)
+- `action` (VARCHAR 100) - Typ akcji (np. CREATE_ITEM, LOGIN, REGISTER)
+- `service` (VARCHAR 50) - Nazwa serwisu, który wykonał akcję (auth-service, crud-service, api-gateway)
+- `details` (TEXT) - Szczegółowe informacje o akcji (opcjonalne)
+- `ip_address` (VARCHAR 45) - Adres IP żądania (opcjonalne)
+- `created_at` (TIMESTAMPTZ) - Data i czas wykonania akcji
 
-CREATE POLICY "Users can view all logs"
-  ON logs FOR SELECT
-  USING (true);
+**Row Level Security:**
 
-CREATE POLICY "Services can insert logs"
-  ON logs FOR INSERT
-  WITH CHECK (true);
-```
-
-[widok_tabela_logs_supabase]
+- Wszyscy użytkownicy mogą przeglądać logi
+- Serwisy mogą dodawać nowe logi
 
 ---
-
-## Testowanie
-
-### Testy Manualne
-
-#### 1. Rejestracja Użytkownika
-
-1. Przejdź do strony rejestracji
-2. Wypełnij formularz danymi testowymi
-3. Kliknij "Sign Up"
-4. Sprawdź komunikat sukcesu
-5. Sprawdź logi w konsoli przeglądarki
-
-[widok_logi_konsoli_rejestracja_logowanie]
-
-#### 2. Logowanie
-
-1. Przejdź do strony logowania
-2. Wprowadź dane zarejestrowanego użytkownika
-3. Kliknij "Sign In"
-4. Sprawdź przekierowanie do strony chronionej
-5. Sprawdź wyświetlenie powitania w navbarze
-
-#### 3. Tworzenie Rekordu
-
-1. Przejdź do sekcji "Items"
-2. Wypełnij formularz tworzenia
-3. Kliknij "Create Item"
-4. Sprawdź pojawienie się rekordu na liście
-5. Sprawdź logi w konsoli
-
-[widok_logi_tworzenia_rekordu]
-
-#### 4. Edycja Rekordu
-
-1. Kliknij "Edit" przy wybranym rekordzie
-2. Zmień dane w formularzu
-3. Kliknij "Save"
-4. Sprawdź zaktualizowane dane na liście
-
-#### 5. Usuwanie Rekordu
-
-1. Kliknij "Delete" przy wybranym rekordzie
-2. Potwierdź w modalu
-3. Sprawdź usunięcie rekordu z listy
-
-#### 6. Przeglądanie Logów
-
-1. Przejdź do sekcji "Logs"
-2. Sprawdź listę wszystkich logów
-3. Sprawdź szczegóły każdego logu
 
 ### Testy API
 
@@ -698,7 +617,10 @@ Wszystkie serwisy logują swoje działania do konsoli Docker. Logi zawierają:
 - Szczegóły operacji
 - Błędy i ostrzeżenia
 
-[widok_logi_konsoli_rejestracja_logowanie]
+<img width="1095" height="665" alt="Screenshot 2025-12-29 at 09 26 04" src="https://github.com/user-attachments/assets/b22cc16a-918f-4bfc-87a2-ef1fe9e6c8fd" />
+<img width="1095" height="394" alt="Screenshot 2025-12-29 at 09 25 19" src="https://github.com/user-attachments/assets/689f98df-9898-43e5-868f-120503e7e17f" />
+<img width="1082" height="221" alt="Screenshot 2025-12-29 at 09 42 48" src="https://github.com/user-attachments/assets/2a5ffa71-3d35-447c-a300-1be2f27651c0" />
+
 
 ### Logi w Bazie Danych
 
@@ -709,7 +631,7 @@ Wszystkie akcje są rejestrowane w tabeli `logs` w Supabase:
 - Żądania do API Gateway
 - Informacje o IP i czasie
 
-[widok_tabela_logs_supabase]
+<img width="1792" height="1077" alt="Screenshot 2025-12-29 at 09 23 56" src="https://github.com/user-attachments/assets/a687071c-d400-47f3-98ec-f419b33fe53d" />
 
 ### Monitorowanie Kontenerów
 
@@ -719,4 +641,4 @@ Status kontenerów można monitorować przez:
 - `docker-compose ps`
 - `docker-compose logs`
 
-[widok_docker_desktop_kontenery_logi]
+<img width="1792" height="1077" alt="Screenshot 2025-12-29 at 07 57 26" src="https://github.com/user-attachments/assets/e5f2fbc2-b247-456c-b1cd-0a4c2ed349b5" />
