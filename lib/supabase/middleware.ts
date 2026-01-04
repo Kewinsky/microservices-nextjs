@@ -6,10 +6,8 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
-  // Sprawdź token z cookie (z API Gateway)
   const authToken = request.cookies.get('auth_token')?.value
 
-  // Jeśli jest token w cookie, sprawdź go przez Supabase
   let user = null
   if (authToken) {
     try {
@@ -34,17 +32,15 @@ export async function updateSession(request: NextRequest) {
         }
       )
       
-      // Weryfikuj token przez Supabase
       const { data, error } = await supabase.auth.getUser(authToken)
       if (!error && data?.user) {
         user = data.user
       }
     } catch (error) {
-      console.warn('Błąd weryfikacji tokenu:', error)
+      console.warn('Token verification error:', error)
     }
   }
 
-  // Jeśli nie ma użytkownika i nie jesteśmy na stronie logowania/rejestracji, przekieruj
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&

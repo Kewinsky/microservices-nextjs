@@ -9,7 +9,6 @@ export function LogoutButton() {
 
   const logout = () => {
     apiClient.logout();
-    // Usuń cookie
     document.cookie = 'auth_token=; path=/; max-age=0';
     router.push("/auth/login");
     router.refresh();

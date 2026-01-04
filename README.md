@@ -210,8 +210,8 @@ LOGGING_SERVICE_URL=http://localhost:3003
 
 ```bash
 # 1. Skonfiguruj zmienne środowiskowe
-cp .env.example .env
-# Edytuj .env i dodaj swoje klucze Supabase
+# Utwórz pliki .env zgodnie z sekcją "Konfiguracja" poniżej
+# i dodaj swoje klucze Supabase
 
 # 2. Uruchom mikroserwisy i API Gateway
 docker-compose up -d
@@ -354,18 +354,29 @@ Wszystkie dane przechowywane są w Supabase:
 
 ## 🧪 Testowanie
 
-Uruchom skrypt testowy:
-
-```bash
-./test-all-functionalities.sh
-```
-
-Lub przetestuj manualnie:
+Przetestuj manualnie przez interfejs użytkownika:
 
 1. Rejestracja: `/auth/sign-up`
 2. Logowanie: `/auth/login`
 3. CRUD: `/items`
 4. Logi: `/logs`
+
+Lub użyj curl do testowania API bezpośrednio:
+
+```bash
+# Health check
+curl http://localhost:3000/health/all
+
+# Rejestracja
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"test123456","name":"Test User"}'
+
+# Logowanie
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"test123456"}'
+```
 
 ## 📄 Licencja
 

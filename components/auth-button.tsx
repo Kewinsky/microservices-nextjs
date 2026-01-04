@@ -7,25 +7,26 @@ import { cookies } from "next/headers";
 export async function AuthButton() {
   const supabase = await createClient();
 
-  // Spróbuj najpierw przez getClaims (dla Supabase session)
   let user = null;
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
-  
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+
   if (!claimsError && claimsData?.claims) {
     user = claimsData.claims;
   } else {
-    // Jeśli nie ma Supabase session, sprawdź token z cookie (z API Gateway)
     const cookieStore = await cookies();
-    const authToken = cookieStore.get('auth_token')?.value;
-    
+    const authToken = cookieStore.get("auth_token")?.value;
+
     if (authToken) {
-      const { data: userData, error: userError } = await supabase.auth.getUser(authToken);
+      const { data: userData, error: userError } = await supabase.auth.getUser(
+        authToken
+      );
       if (!userError && userData?.user) {
         user = {
           sub: userData.user.id,
           email: userData.user.email,
           name: userData.user.user_metadata?.name,
-          ...userData.user.user_metadata
+          ...userData.user.user_metadata,
         };
       }
     }
@@ -34,7 +35,7 @@ export async function AuthButton() {
   return user ? (
     <div className="flex items-center gap-4">
       <span className="text-sm">
-        {user.name ? `Witaj, ${user.name}!` : `Witaj, ${user.email}!`}
+        {user.name ? `Welcome, ${user.name}!` : `Welcome, ${user.email}!`}
       </span>
       <LogoutButton />
     </div>

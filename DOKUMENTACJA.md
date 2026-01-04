@@ -595,13 +595,30 @@ Przechowuje logi wszystkich operacji systemowych.
 
 ### Testy API
 
-Można użyć skryptu testowego:
+Można testować API bezpośrednio używając `curl` lub innych narzędzi HTTP:
 
 ```bash
-./test-all-functionalities.sh
+# Health check wszystkich serwisów
+curl http://localhost:3000/health/all
+
+# Rejestracja użytkownika
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"test123456","name":"Test User"}'
+
+# Logowanie
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"test123456"}'
+
+# Utworzenie itemu (wymaga tokenu z logowania)
+curl -X POST http://localhost:3000/api/items \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"title":"Test Item","description":"Test Description"}'
 ```
 
-Skrypt testuje wszystkie endpointy API i wyświetla wyniki.
+Lub przetestuj przez interfejs użytkownika w przeglądarce.
 
 ---
 

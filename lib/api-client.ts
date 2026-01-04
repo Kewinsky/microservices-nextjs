@@ -1,4 +1,7 @@
-const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:3000';
+import axios, { AxiosInstance, AxiosError } from "axios";
+
+const API_GATEWAY_URL =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:3000";
 
 export interface User {
   id: string;
@@ -32,23 +35,61 @@ export interface Log {
 }
 
 class ApiClient {
-  private baseUrl: string;
+  private axiosInstance: AxiosInstance;
   private token: string | null = null;
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
-    if (typeof window !== 'undefined') {
-      this.token = localStorage.getItem('auth_token');
+    this.axiosInstance = axios.create({
+      baseURL: baseUrl,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (typeof window !== "undefined") {
+      this.token = localStorage.getItem("auth_token");
     }
+
+    this.setupInterceptors();
+  }
+
+  private setupInterceptors() {
+    this.axiosInstance.interceptors.request.use((config) => {
+      if (this.token) {
+        config.headers.Authorization = `Bearer ${this.token}`;
+      }
+      return config;
+    });
+
+    this.axiosInstance.interceptors.response.use(
+      (response) => response,
+      (error: AxiosError) => {
+        if (error.code === "ECONNREFUSED" || error.code === "ERR_NETWORK") {
+          throw new Error(
+            `Cannot connect to API Gateway. Check if the service is running at ${this.axiosInstance.defaults.baseURL}`
+          );
+        }
+
+        const errorMessage =
+          (error.response?.data as { error?: string; message?: string })
+            ?.error ||
+          (error.response?.data as { error?: string; message?: string })
+            ?.message ||
+          error.message ||
+          `HTTP error! status: ${error.response?.status || "unknown"}`;
+
+        throw new Error(errorMessage);
+      }
+    );
   }
 
   setToken(token: string | null) {
     this.token = token;
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       if (token) {
-        localStorage.setItem('auth_token', token);
+        localStorage.setItem("auth_token", token);
       } else {
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem("auth_token");
       }
     }
   }
@@ -57,158 +98,145 @@ class ApiClient {
     return this.token;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
+  async register(
+    email: string,
+    password: string,
+    name?: string
+  ): Promise<AuthResponse> {
+    const { data: response } = await this.axiosInstance.post<AuthResponse>(
+      "/api/auth/register",
+      { email, password, name }
+    );
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ 
-          error: `HTTP error! status: ${response.status}` 
-        }));
-        throw new Error(error.error || error.message || `HTTP error! status: ${response.status}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      // Jeśli to błąd sieci (CORS, connection refused, etc.)
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new Error(`Nie można połączyć się z API Gateway. Sprawdź czy serwis działa na ${this.baseUrl}`);
-      }
-      throw error;
-    }
-  }
-
-  // Auth endpoints
-  async register(email: string, password: string, name?: string): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, name }),
-    });
-    
-    // Jeśli token został zwrócony, zapisz go
     if (response.token) {
       this.setToken(response.token);
-      
-      // Ustaw token w cookie dla middleware
-      if (typeof document !== 'undefined') {
+
+      if (typeof document !== "undefined") {
         document.cookie = `auth_token=${response.token}; path=/; max-age=86400; SameSite=Lax`;
       }
     }
-    
+
     return response;
   }
 
   async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    const { data: response } = await this.axiosInstance.post<AuthResponse>(
+      "/api/auth/login",
+      { email, password }
+    );
     this.setToken(response.token);
-    
-    // Ustaw token w cookie dla middleware
-    if (typeof document !== 'undefined') {
+
+    if (typeof document !== "undefined") {
       document.cookie = `auth_token=${response.token}; path=/; max-age=86400; SameSite=Lax`;
     }
-    
+
     return response;
   }
 
   async verifyToken(): Promise<{ valid: boolean; user: User }> {
-    return this.request<{ valid: boolean; user: User }>('/api/auth/verify', {
-      method: 'POST',
-    });
+    const { data } = await this.axiosInstance.post<{
+      valid: boolean;
+      user: User;
+    }>("/api/auth/verify");
+    return data;
   }
 
   logout() {
     this.setToken(null);
-    // Usuń cookie
-    if (typeof document !== 'undefined') {
-      document.cookie = 'auth_token=; path=/; max-age=0';
+    if (typeof document !== "undefined") {
+      document.cookie = "auth_token=; path=/; max-age=0";
     }
   }
 
-  // CRUD endpoints
-  async getItems(limit?: number, offset?: number): Promise<{ items: Item[]; total: number; limit: number; offset: number }> {
-    const params = new URLSearchParams();
-    if (limit) params.append('limit', limit.toString());
-    if (offset) params.append('offset', offset.toString());
-    
-    const query = params.toString();
-    return this.request<{ items: Item[]; total: number; limit: number; offset: number }>(
-      `/api/items${query ? `?${query}` : ''}`
-    );
+  async getItems(
+    limit?: number,
+    offset?: number
+  ): Promise<{ items: Item[]; total: number; limit: number; offset: number }> {
+    const { data } = await this.axiosInstance.get<{
+      items: Item[];
+      total: number;
+      limit: number;
+      offset: number;
+    }>("/api/items", {
+      params: { limit, offset },
+    });
+    return data;
   }
 
   async getItem(id: string): Promise<{ item: Item }> {
-    return this.request<{ item: Item }>(`/api/items/${id}`);
+    const { data } = await this.axiosInstance.get<{ item: Item }>(
+      `/api/items/${id}`
+    );
+    return data;
   }
 
-  async createItem(title: string, description?: string): Promise<{ message: string; item: Item }> {
-    return this.request<{ message: string; item: Item }>('/api/items', {
-      method: 'POST',
-      body: JSON.stringify({ title, description }),
-    });
+  async createItem(
+    title: string,
+    description?: string
+  ): Promise<{ message: string; item: Item }> {
+    const { data } = await this.axiosInstance.post<{
+      message: string;
+      item: Item;
+    }>("/api/items", { title, description });
+    return data;
   }
 
-  async updateItem(id: string, title: string, description?: string): Promise<{ message: string; item: Item }> {
-    return this.request<{ message: string; item: Item }>(`/api/items/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ title, description }),
-    });
+  async updateItem(
+    id: string,
+    title: string,
+    description?: string
+  ): Promise<{ message: string; item: Item }> {
+    const { data } = await this.axiosInstance.put<{
+      message: string;
+      item: Item;
+    }>(`/api/items/${id}`, { title, description });
+    return data;
   }
 
   async deleteItem(id: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/api/items/${id}`, {
-      method: 'DELETE',
-    });
+    const { data } = await this.axiosInstance.delete<{ message: string }>(
+      `/api/items/${id}`
+    );
+    return data;
   }
 
-  // Logs endpoints
-  async getLogs(limit?: number, offset?: number, service?: string, userId?: string): Promise<{
+  async getLogs(
+    limit?: number,
+    offset?: number,
+    service?: string,
+    userId?: string
+  ): Promise<{
     logs: Log[];
     total: number;
     limit: number;
     offset: number;
   }> {
-    const params = new URLSearchParams();
-    if (limit) params.append('limit', limit.toString());
-    if (offset) params.append('offset', offset.toString());
-    if (service) params.append('service', service);
-    if (userId) params.append('user_id', userId);
-
-    const query = params.toString();
-    return this.request<{ logs: Log[]; total: number; limit: number; offset: number }>(
-      `/api/logs${query ? `?${query}` : ''}`
-    );
+    const { data } = await this.axiosInstance.get<{
+      logs: Log[];
+      total: number;
+      limit: number;
+      offset: number;
+    }>("/api/logs", {
+      params: { limit, offset, service, user_id: userId },
+    });
+    return data;
   }
 
-  async getUserLogs(userId: string, limit?: number, offset?: number): Promise<{ logs: Log[]; total: number; limit: number; offset: number }> {
-    const params = new URLSearchParams();
-    if (limit) params.append('limit', limit.toString());
-    if (offset) params.append('offset', offset.toString());
-
-    const query = params.toString();
-    return this.request<{ logs: Log[]; total: number; limit: number; offset: number }>(
-      `/api/logs/user/${userId}${query ? `?${query}` : ''}`
-    );
+  async getUserLogs(
+    userId: string,
+    limit?: number,
+    offset?: number
+  ): Promise<{ logs: Log[]; total: number; limit: number; offset: number }> {
+    const { data } = await this.axiosInstance.get<{
+      logs: Log[];
+      total: number;
+      limit: number;
+      offset: number;
+    }>(`/api/logs/user/${userId}`, {
+      params: { limit, offset },
+    });
+    return data;
   }
 }
 
 export const apiClient = new ApiClient(API_GATEWAY_URL);
-
