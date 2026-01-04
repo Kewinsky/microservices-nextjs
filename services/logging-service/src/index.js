@@ -12,26 +12,23 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3003;
 
-// Konfiguracja Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  logger.error('Brak wymaganych zmiennych środowiskowych SUPABASE_URL lub SUPABASE_SERVICE_ROLE_KEY');
+  logger.error('Missing required environment variables SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(logger.requestLogger.bind(logger));
 
-// Walidacja
 const createLogValidation = [
-  body('action').trim().notEmpty().withMessage('Action jest wymagane').isLength({ max: 100 }),
-  body('service').trim().notEmpty().withMessage('Service jest wymagane').isLength({ max: 50 }),
+  body('action').trim().notEmpty().withMessage('Action is required').isLength({ max: 100 }),
+  body('service').trim().notEmpty().withMessage('Service is required').isLength({ max: 50 }),
   body('user_id').optional().isUUID(),
   body('details').optional(),
   body('ip_address').optional().isIP()
@@ -39,15 +36,15 @@ const createLogValidation = [
 
 /**
  * POST /api/logs
- * Zapisanie logu (używane przez inne serwisy)
- * Nie wymaga autoryzacji - używane wewnętrznie
+ * Save a log (used by other services)
+ * No authorization required - used internally
  */
 app.post('/api/logs', createLogValidation, async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ 
-        error: 'Błędne dane wejściowe',
+        error: 'Invalid input data',
         details: errors.array()
       });
     }
@@ -67,12 +64,12 @@ app.post('/api/logs', createLogValidation, async (req, res, next) => {
       .single();
 
     if (error) {
-      logger.error('Błąd podczas zapisywania logu:', error);
-      return res.status(500).json({ error: 'Błąd podczas zapisywania logu' });
+      logger.error('Error saving log:', error);
+      return res.status(500).json({ error: 'Error saving log' });
     }
 
     res.status(201).json({
-      message: 'Log zapisany pomyślnie',
+      message: 'Log saved successfully',
       log: data
     });
   } catch (error) {
@@ -82,7 +79,7 @@ app.post('/api/logs', createLogValidation, async (req, res, next) => {
 
 /**
  * GET /api/logs
- * Pobranie logów (wymaga autoryzacji)
+ * Get logs (requires authorization)
  */
 app.get('/api/logs', authenticateToken, async (req, res, next) => {
   try {
@@ -95,24 +92,21 @@ app.get('/api/logs', authenticateToken, async (req, res, next) => {
       .order('created_at', { ascending: false })
       .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
 
-    // Filtrowanie po serwisie
     if (service) {
       query = query.eq('service', service);
     }
 
-    // Filtrowanie po użytkowniku (tylko własne logi lub jeśli admin)
     if (user_id) {
       query = query.eq('user_id', user_id);
     } else {
-      // Domyślnie tylko własne logi
       query = query.eq('user_id', currentUserId);
     }
 
     const { data, error, count } = await query;
 
     if (error) {
-      logger.error('Błąd podczas pobierania logów:', error);
-      return res.status(500).json({ error: 'Błąd podczas pobierania logów' });
+      logger.error('Error fetching logs:', error);
+      return res.status(500).json({ error: 'Error fetching logs' });
     }
 
     res.json({
@@ -128,14 +122,14 @@ app.get('/api/logs', authenticateToken, async (req, res, next) => {
 
 /**
  * GET /api/logs/user/:userId
- * Pobranie logów konkretnego użytkownika
+ * Get logs for a specific user
  */
 app.get('/api/logs/user/:userId', authenticateToken, param('userId').isUUID(), async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ 
-        error: 'Nieprawidłowy format ID użytkownika',
+        error: 'Invalid user ID format',
         details: errors.array()
       });
     }
@@ -144,9 +138,8 @@ app.get('/api/logs/user/:userId', authenticateToken, param('userId').isUUID(), a
     const currentUserId = req.user.id;
     const { limit = 50, offset = 0 } = req.query;
 
-    // Użytkownik może zobaczyć tylko swoje logi
     if (userId !== currentUserId) {
-      return res.status(403).json({ error: 'Brak uprawnień do przeglądania logów tego użytkownika' });
+      return res.status(403).json({ error: 'Insufficient permissions to view this user\'s logs' });
     }
 
     const { data, error, count } = await supabase
@@ -157,8 +150,8 @@ app.get('/api/logs/user/:userId', authenticateToken, param('userId').isUUID(), a
       .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
 
     if (error) {
-      logger.error('Błąd podczas pobierania logów użytkownika:', error);
-      return res.status(500).json({ error: 'Błąd podczas pobierania logów' });
+      logger.error('Error fetching user logs:', error);
+      return res.status(500).json({ error: 'Error fetching logs' });
     }
 
     res.json({
@@ -188,6 +181,6 @@ app.get('/health', (req, res) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  logger.info(`Logging Service uruchomiony na porcie ${PORT}`);
+  logger.info(`Logging Service running on port ${PORT}`);
 });
 
